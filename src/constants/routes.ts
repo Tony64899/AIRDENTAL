@@ -21,6 +21,9 @@ export const ROUTES = {
   BILLING: '/billing',
   XRAY: '/xray',
 
+  // Messaging
+  MESSAGES: '/messages',
+
   // Admin
   SETTINGS:        '/settings',
   STAFF:           '/staff',

@@ -5,11 +5,12 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Calendar, LayoutDashboard, Users, CreditCard,
-  Image, Settings, Bell, UserCog, Building2,
+  Image, Settings, Bell, UserCog, Building2, MessageCircle,
 } from 'lucide-react';
 
 import { AirDentalLogo } from '../../assets/icons/AirDentalLogo';
 import { useAuth } from '../../hooks/useAuth';
+import { useMessaging } from '../../contexts/MessagingContext';
 import { ROUTES } from '../../constants/routes';
 
 interface NavItem {
@@ -25,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Patients',   icon: Users,            path: ROUTES.PATIENTS,      isBuilt: true  },
   { label: 'Billing',    icon: CreditCard,       path: ROUTES.BILLING,       isBuilt: true  },
   { label: 'X-rays',     icon: Image,            path: ROUTES.XRAY,          isBuilt: true  },
+  { label: 'Messages',   icon: MessageCircle,    path: ROUTES.MESSAGES,      isBuilt: true  },
   { label: 'Notify',     icon: Bell,             path: ROUTES.NOTIFICATIONS, isBuilt: true  },
   { label: 'Locations',  icon: Building2,        path: ROUTES.LOCATIONS,     isBuilt: true  },
   { label: 'Staff',      icon: UserCog,          path: ROUTES.STAFF,         isBuilt: true  },
@@ -33,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function SideNav() {
   const { state, logout } = useAuth();
+  const { totalUnread }   = useMessaging();
   const location = useLocation();
 
   const user = state.user;
@@ -75,6 +78,9 @@ export function SideNav() {
             );
           }
 
+          const isMessages = path === ROUTES.MESSAGES;
+          const badge      = isMessages && totalUnread > 0 ? totalUnread : 0;
+
           return (
             <NavLink
               key={label}
@@ -88,7 +94,12 @@ export function SideNav() {
               aria-current={isActive ? 'page' : undefined}
             >
               <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-              <span className="text-sm font-medium">{label}</span>
+              <span className="text-sm font-medium flex-1">{label}</span>
+              {badge > 0 && (
+                <span className="bg-[#A60F2D] text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </NavLink>
           );
         })}
