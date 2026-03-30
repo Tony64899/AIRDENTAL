@@ -31,7 +31,7 @@ export default function MfaPage() {
       topSlot={
         <Link
           to={ROUTES.LOGIN}
-          className="inline-flex items-center gap-1.5 text-sm text-[#4A5568] hover:text-[#1a202c] transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to login

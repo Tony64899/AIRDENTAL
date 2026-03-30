@@ -1,68 +1,71 @@
-// AuthPageShell — shared wrapper for all auth pages (Login, MFA, ForgotPassword, ResetPassword).
-// Eliminates the 3x duplicated logo SVG code that was in each page.
-// Provides the consistent brand header, centered content card, and footer.
+// AuthPageShell — shared layout wrapper for all auth pages.
+// Spec: 01_auth.md — subtle gradient bg, floating card (no shadow/border),
+// official logo PNG in white rounded-square, Navy #0B3A70 branding,
+// HIPAA footer on every page.
 
 import type { ReactNode } from 'react';
-import { AirDentalLogo, CLINIC_LOGO_SVG } from '../../assets/icons/AirDentalLogo';
+import airDentalLogo from '../../assets/images/air-dental-logo.png';
 
 interface AuthPageShellProps {
-  // Page-specific heading and subtext
-  title: string;
+  title:    string;
   subtitle: string;
-
-  // Optional content shown above the title (e.g., "Back to login" link)
-  topSlot?: ReactNode;
-
-  // The form component goes here
   children: ReactNode;
+  /** Optional slot above the logo — e.g. "← Back to login" link */
+  topSlot?: ReactNode;
 }
 
-export function AuthPageShell({ title, subtitle, topSlot, children }: AuthPageShellProps) {
+export function AuthPageShell({ title, subtitle, children, topSlot }: AuthPageShellProps) {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Brand header */}
-      <header className="px-8 py-5">
-        <div className="flex items-center gap-2.5">
-          <AirDentalLogo size={30} />
-          <span className="text-lg font-bold text-[#1a202c]">Air Dental</span>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
 
-      {/* Centered main content */}
-      <main className="flex-1 flex items-center justify-center px-4 pb-16">
-        <div className="w-full max-w-[420px] space-y-7">
-          {/* Optional top slot (back link, etc.) */}
-          {topSlot}
+        {/* Optional back-link / top slot */}
+        {topSlot && (
+          <div className="mb-6">{topSlot}</div>
+        )}
 
-          {/* Clinic branding */}
-          <div className="text-center space-y-2.5">
-            <img
-              src={CLINIC_LOGO_SVG}
-              alt="Inspire Dental"
-              className="w-[72px] h-[72px] mx-auto rounded-2xl"
-            />
-            <p className="text-[#2B6CB0] font-semibold text-sm">Inspire Dental</p>
+        {/* ── Logo block ─────────────────────────────────────────────────
+            spec: w-20 h-20 bg-white rounded-[1.25rem] shadow-sm
+                  border-[0.5px] border-slate-200, inner rounded-xl img
+        ─────────────────────────────────────────────────────────────── */}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="w-20 h-20 bg-white rounded-[1.25rem] shadow-sm border border-slate-200 flex items-center justify-center p-0.5 overflow-hidden">
+            <div className="w-full h-full rounded-xl overflow-hidden bg-white flex items-center justify-center">
+              <img
+                src={airDentalLogo}
+                alt="Air Dental"
+                className="w-full h-full object-contain"
+                draggable={false}
+              />
+            </div>
           </div>
-
-          {/* Page heading */}
-          <div className="text-center space-y-1.5">
-            <h1 className="text-[28px] font-bold text-[#1a202c] tracking-tight">
-              {title}
-            </h1>
-            <p className="text-sm text-[#718096]">{subtitle}</p>
-          </div>
-
-          {/* Page-specific form content */}
-          {children}
+          <span className="text-xl font-bold text-[#0B3A70] tracking-tight">
+            Air Dental
+          </span>
         </div>
-      </main>
 
-      {/* Footer */}
-      <footer className="px-8 py-4">
-        <p className="text-xs text-[#A0AEC0]">
-          &copy; {new Date().getFullYear()} Air Dental Inc.
+        {/* ── Page heading ─────────────────────────────────────────────── */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+            {title}
+          </h1>
+          <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+            {subtitle}
+          </p>
+        </div>
+
+        {/* ── Page-specific form content ───────────────────────────────── */}
+        {children}
+
+        {/* ── HIPAA footer (required on every auth page) ───────────────── */}
+        <p className="text-xs text-slate-400 mt-8 text-center">
+          HIPAA Compliant System&nbsp;•&nbsp;All access attempts are logged
         </p>
-      </footer>
+
+      </div>
     </div>
   );
 }
+
+// Keep re-export for any code that still imports CLINIC_LOGO_SVG from this file
+export { CLINIC_LOGO_SVG } from '../../assets/icons/AirDentalLogo';

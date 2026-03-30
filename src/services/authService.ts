@@ -210,6 +210,26 @@ export async function forgotPassword(
   };
 }
 
+export async function resetPassword(
+  token: string,
+  newPassword: string
+): Promise<{ success: boolean }> {
+  await delay(800);
+
+  // TODO (backend phase): Validate token via NestJS, PATCH /auth/reset-password
+  // Mock: any non-empty token is accepted
+  addAuditEntry({
+    action: 'password_change',
+    userId: null,
+    email: 'unknown',
+    details: 'Password reset completed via token.',
+  });
+
+  void token;
+  void newPassword;
+  return { success: true };
+}
+
 export function getAuditLog(): AuditLogEntry[] {
   return [...auditLog];
 }
