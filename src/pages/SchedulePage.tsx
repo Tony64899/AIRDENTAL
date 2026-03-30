@@ -1,91 +1,189 @@
-// Schedule Page — the main dental scheduling view (previously in App.tsx)
+// SchedulePage — main appointment scheduling view.
+// Phase 3+: useSchedule hook, AddAppointmentModal, status workflow,
+//            privacy mode, drag-to-move, column reorder, patient sidebar.
+// ⚠️ HIPAA: Privacy Mode is UI-only — PHI stays in memory, audit logging still applies.
 
-import { useState } from 'react';
-import { Sidebar } from '../components/Sidebar';
-import { CalendarHeader } from '../components/CalendarHeader';
-import { CalendarGrid } from '../components/CalendarGrid';
-import { AppointmentModal } from '../components/AppointmentModal';
-import { TimeSettingsModal } from '../components/TimeSettingsModal';
-import type { Appointment, Provider } from '../App';
+import { useState, useEffect } from 'react';
+import { Plus }                 from 'lucide-react';
+
+import { useSchedule }         from '../hooks/useSchedule';
+import { ScheduleSidebar }     from '../components/schedule/ScheduleSidebar';
+import { CalendarHeader }      from '../components/schedule/CalendarHeader';
+import { CalendarGrid }        from '../components/schedule/CalendarGrid';
+import { AppointmentModal }    from '../components/schedule/AppointmentModal';
+import { AddAppointmentModal } from '../components/schedule/AddAppointmentModal';
+import { TimeSettingsModal }   from '../components/schedule/TimeSettingsModal';
+import { Alert }               from '../components/ui/Alert';
+import { toISODate }           from '../utils/dateUtils';
+import type { Appointment }    from '../types/appointment';
+import type { Provider }       from '../types/provider';
 
 export default function SchedulePage() {
-  const [view, setView] = useState<'day' | 'week'>('day');
+  // ── View / navigation state ───────────────────────────────────────────
+  const [view,        setView]        = useState<'day' | 'week'>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [showTimeSettings, setShowTimeSettings] = useState(false);
-  const [timeRange, setTimeRange] = useState({ start: 7, end: 20 });
+  const [timeRange,   setTimeRange]   = useState({ start: 7, end: 20 });
 
-  const [providers, setProviders] = useState<Provider[]>([
-    { id: '1', name: 'Dr. Sarah Chen',      operatory: 'Operatory 1', color: '#3B82F6' },
-    { id: '2', name: 'Dr. Michael Torres',  operatory: 'Operatory 2', color: '#10B981' },
-    { id: '3', name: 'Dr. Emily White',     operatory: 'Operatory 3', color: '#8B5CF6' },
-    { id: '4', name: 'Dr. James Park',      operatory: 'Operatory 4', color: '#F59E0B' },
-  ]);
+  // ── Modal state ───────────────────────────────────────────────────────
+  const [selectedAppointment,  setSelectedAppointment]  = useState<Appointment | null>(null);
+  const [sidebarAppointment,   setSidebarAppointment]   = useState<Appointment | null>(null);
+  const [showAddModal,         setShowAddModal]          = useState(false);
+  const [showTimeSettings,     setShowTimeSettings]      = useState(false);
 
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: '1', patientName: 'John Smith',    procedure: 'Crown Preparation',       providerId: '1', startTime: '09:00', endTime: '10:30', notes: 'Patient prefers local anesthesia' },
-    { id: '2', patientName: 'Emma Johnson',  procedure: 'Routine Cleaning',         providerId: '1', startTime: '11:00', endTime: '12:00' },
-    { id: '3', patientName: 'Michael Brown', procedure: 'Root Canal',               providerId: '2', startTime: '08:00', endTime: '09:30', notes: 'Follow-up appointment' },
-    { id: '4', patientName: 'Sophia Davis',  procedure: 'Teeth Whitening',          providerId: '2', startTime: '14:00', endTime: '15:00' },
-    { id: '5', patientName: 'Oliver Wilson', procedure: 'Dental Implant',           providerId: '3', startTime: '10:00', endTime: '12:00', notes: 'Surgical procedure - requires assistant' },
-    { id: '6', patientName: 'Ava Martinez',  procedure: 'Orthodontic Consultation', providerId: '4', startTime: '13:00', endTime: '13:45' },
-    { id: '7', patientName: 'William Garcia',procedure: 'Filling (2 cavities)',     providerId: '3', startTime: '15:30', endTime: '16:30' },
-  ]);
+  // ── Privacy Mode ──────────────────────────────────────────────────────
+  // ⚠️ HIPAA: Privacy Mode hides PHI on screen only — data still in memory.
+  //            Intended for patient-facing display situations.
+  const [privacyMode, setPrivacyMode] = useState(false);
 
-  const handlePreviousDay = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 1);
-    setCurrentDate(newDate);
+  // Press 'P' to toggle Privacy Mode (keyboard shortcut)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key !== 'p' && e.key !== 'P') return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      setPrivacyMode(prev => !prev);
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, []);
+
+  // ── Data — powered by useSchedule hook ────────────────────────────────
+  const {
+    appointments,
+    providers,
+    loadState,
+    error,
+    addAppointment,
+    updateAppointment,
+    deleteAppointment,
+    updateProvider,
+    addProvider,
+    reorderProvider,
+  } = useSchedule(currentDate);
+
+  // ── Date navigation ───────────────────────────────────────────────────
+  const handlePreviousDay = () => setCurrentDate(prev => {
+    const d = new Date(prev); d.setDate(d.getDate() - 1); return d;
+  });
+  const handleNextDay = () => setCurrentDate(prev => {
+    const d = new Date(prev); d.setDate(d.getDate() + 1); return d;
+  });
+
+  // ── Appointment CRUD handlers ─────────────────────────────────────────
+  const handleAdd = async (data: Omit<Appointment, 'id'>) => {
+    await addAppointment(data);
+    setShowAddModal(false);
   };
 
-  const handleNextDay = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 1);
-    setCurrentDate(newDate);
-  };
-
-  const handleUpdateProvider = (id: string, updates: Partial<Provider>) => {
-    setProviders(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
-  };
-
-  const handleDeleteAppointment = (id: string) => {
-    setAppointments(prev => prev.filter(a => a.id !== id));
+  const handleDelete = async (id: string) => {
+    await deleteAppointment(id);
     setSelectedAppointment(null);
+    // Also clear sidebar if it was showing that appointment
+    setSidebarAppointment(prev => prev?.id === id ? null : prev);
   };
 
-  const handleUpdateAppointment = (id: string, updates: Partial<Appointment>) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
+  const handleUpdate = async (id: string, updates: Partial<Appointment>) => {
+    await updateAppointment(id, updates);
+    setSelectedAppointment(prev => prev?.id === id ? { ...prev, ...updates } : prev);
+    setSidebarAppointment(prev => prev?.id === id ? { ...prev, ...updates } : prev);
   };
+
+  // ── Provider handlers ─────────────────────────────────────────────────
+  const handleAddOperatory = () => {
+    addProvider({
+      id:          `prov-${Date.now()}`,
+      name:        'Doctor',
+      operatory:   `Operatory ${providers.length + 1}`,
+      specialty:   'General Dentistry',
+      clinicId:    'clinic-1',
+      locationId:  'loc-1',
+    } satisfies Provider);
+    setShowTimeSettings(false);
+  };
+
+  const isLoading = loadState === 'idle' || loadState === 'loading';
 
   return (
-    <div className="h-screen flex bg-gray-50">
-      <Sidebar currentDate={currentDate} onDateChange={setCurrentDate} />
+    <div className="h-full flex flex-col overflow-hidden">
 
-      <div className="flex-1 flex flex-col">
-        <CalendarHeader
+      {/* Error banner */}
+      {error && (
+        <div className="px-6 pt-3">
+          <Alert variant="error" title="Failed to load schedule">{error}</Alert>
+        </div>
+      )}
+
+      {/* Page header: date nav + privacy toggle + Day/Week + settings */}
+      <CalendarHeader
+        currentDate={currentDate}
+        view={view}
+        privacyMode={privacyMode}
+        onViewChange={setView}
+        onPreviousDay={handlePreviousDay}
+        onNextDay={handleNextDay}
+        onOpenTimeSettings={() => setShowTimeSettings(true)}
+        onTogglePrivacyMode={() => setPrivacyMode(prev => !prev)}
+      />
+
+      {/* Main body: sidebar + calendar grid */}
+      <div className="flex flex-1 overflow-hidden">
+        <ScheduleSidebar
           currentDate={currentDate}
-          view={view}
-          onViewChange={setView}
-          onPreviousDay={handlePreviousDay}
-          onNextDay={handleNextDay}
-          onOpenTimeSettings={() => setShowTimeSettings(true)}
+          onDateChange={setCurrentDate}
+          selectedAppointment={sidebarAppointment}
         />
         <CalendarGrid
           providers={providers}
           appointments={appointments}
           timeRange={timeRange}
-          onAppointmentClick={setSelectedAppointment}
-          onProviderUpdate={handleUpdateProvider}
+          currentDate={toISODate(currentDate)}
+          privacyMode={privacyMode}
+          onAppointmentSingleClick={setSidebarAppointment}
+          onAppointmentDoubleClick={setSelectedAppointment}
+          onAppointmentUpdate={handleUpdate}
+          onProviderUpdate={updateProvider}
+          onReorderProvider={reorderProvider}
+          onOpenTimeSettings={() => setShowTimeSettings(true)}
         />
       </div>
+
+      {/* ── Floating "New Appointment" button ── */}
+      <button
+        onClick={() => setShowAddModal(true)}
+        disabled={isLoading}
+        className="
+          fixed bottom-6 right-6 z-40
+          flex items-center gap-2
+          bg-[#0891b2] hover:bg-[#0e7490] active:bg-[#155e75]
+          disabled:opacity-50 disabled:cursor-not-allowed
+          text-white font-medium text-sm
+          px-4 py-3 rounded-full
+          shadow-lg hover:shadow-xl
+          transition-all duration-150
+        "
+        aria-label="Add new appointment"
+      >
+        <Plus size={18} />
+        New Appointment
+      </button>
+
+      {/* ── Modals ── */}
 
       {selectedAppointment && (
         <AppointmentModal
           appointment={selectedAppointment}
           provider={providers.find(p => p.id === selectedAppointment.providerId)}
           onClose={() => setSelectedAppointment(null)}
-          onDelete={handleDeleteAppointment}
-          onUpdate={handleUpdateAppointment}
+          onDelete={handleDelete}
+          onUpdate={handleUpdate}
+        />
+      )}
+
+      {showAddModal && (
+        <AddAppointmentModal
+          providers={providers}
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAdd}
         />
       )}
 
@@ -94,6 +192,7 @@ export default function SchedulePage() {
           timeRange={timeRange}
           onClose={() => setShowTimeSettings(false)}
           onSave={setTimeRange}
+          onAddOperatory={handleAddOperatory}
         />
       )}
     </div>
