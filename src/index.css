@@ -4,40 +4,109 @@
 
 :root {
   --font-size: 14px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --muted: #ececf0;
+
+  /* --- Air Dental brand palette --- */
+  --brand:           #0891b2;   /* teal-blue: clinical trust, primary CTA */
+  --brand-hover:     #0e7490;
+  --brand-active:    #155e75;
+  --brand-light:     #e0f2fe;   /* light tint for backgrounds */
+
+  /* Semantic status colors */
+  --success:         #059669;
+  --success-light:   #dcfce7;
+  --warning:         #d97706;
+  --warning-light:   #fef9c3;
+  --danger:          #dc2626;
+  --danger-light:    #fee2e2;
+
+  /* Surfaces */
+  --background:      #f8fafc;   /* page background — soft white, not pure white */
+  --surface:         #ffffff;   /* card / panel background */
+  --surface-muted:   #f1f5f9;   /* slightly deeper surface (e.g. table rows) */
+
+  /* Text */
+  --text-primary:    #0f172a;
+  --text-secondary:  #475569;
+  --text-tertiary:   #64748b;
+  --text-disabled:   #94a3b8;
+
+  /* Borders */
+  --border:          rgba(0, 0, 0, 0.08);
+  --border-strong:   rgba(0, 0, 0, 0.15);
+
+  /* Navigation (dark sidebar) */
+  --nav-bg:          #0f172a;
+  --nav-text:        #94a3b8;
+  --nav-text-active: #ffffff;
+  --nav-hover:       rgba(255, 255, 255, 0.05);
+  --nav-active:      rgba(255, 255, 255, 0.1);
+
+  /* Legacy tokens (kept for Tailwind v4 compatibility) */
+  --foreground:      var(--text-primary);
+  --card:            var(--surface);
+  --card-foreground: var(--text-primary);
+  --primary:         var(--brand);
+  --primary-foreground: #ffffff;
+  --muted:           #ececf0;
   --muted-foreground: #717182;
-  --accent: #e9ebef;
+  --accent:          #e9ebef;
   --accent-foreground: #030213;
-  --destructive: #d4183d;
+  --destructive:     var(--danger);
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
-  --radius: 0.625rem;
+  --ring:            var(--brand);
+  --radius:          0.625rem;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
+  /* Brand */
+  --color-brand:           var(--brand);
+  --color-brand-hover:     var(--brand-hover);
+  --color-brand-light:     var(--brand-light);
+
+  /* Status */
+  --color-success:         var(--success);
+  --color-success-light:   var(--success-light);
+  --color-warning:         var(--warning);
+  --color-warning-light:   var(--warning-light);
+  --color-danger:          var(--danger);
+  --color-danger-light:    var(--danger-light);
+
+  /* Surfaces */
+  --color-background:      var(--background);
+  --color-surface:         var(--surface);
+  --color-surface-muted:   var(--surface-muted);
+
+  /* Text */
+  --color-text-primary:    var(--text-primary);
+  --color-text-secondary:  var(--text-secondary);
+  --color-text-tertiary:   var(--text-tertiary);
+  --color-text-disabled:   var(--text-disabled);
+
+  /* Borders */
+  --color-border:          var(--border);
+  --color-border-strong:   var(--border-strong);
+
+  /* Navigation */
+  --color-nav-bg:          var(--nav-bg);
+  --color-nav-text:        var(--nav-text);
+
+  /* Legacy tokens */
+  --color-foreground:      var(--foreground);
+  --color-card:            var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-primary: var(--primary);
+  --color-primary:         var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-muted: var(--muted);
+  --color-muted:           var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
+  --color-accent:          var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
+  --color-destructive:     var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-ring: var(--ring);
+  --color-ring:            var(--ring);
+
+  /* Border radius scale */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
