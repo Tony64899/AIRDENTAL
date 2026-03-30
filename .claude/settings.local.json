@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(taskkill //F //IM node.exe)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__cf4cee19-3d0c-4c3e-b934-6d104422883b__use_figma",
+      "Bash(npx vite:*)",
+      "Bash(mkdir -p \"/tmp/figma-export\")",
+      "Bash(unzip -o \"C:\\\\Users\\\\Anthony Lee\\\\Downloads\\\\Air Dental.zip\" -d \"/tmp/figma-export\")"
+    ]
+  }
+}
