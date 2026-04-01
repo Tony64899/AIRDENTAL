@@ -8,7 +8,7 @@ import {
 } from 'react';
 import type { ReactNode } from 'react';
 
-import type { Note, NotesState, NotesAction, NoteType } from '../types/notes';
+import type { Note, NotesState, NotesAction, NoteType, LabStatus } from '../types/notes';
 import { ROLE_CAN_VIEW } from '../types/notes';
 import * as svc from '../services/notesService';
 import { useAuth } from '../hooks/useAuth';
@@ -73,6 +73,14 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
         ),
       };
 
+    case 'UPDATE_LAB_STATUS':
+      return {
+        ...state,
+        notes: state.notes.map(n =>
+          n.id === action.payload.id ? action.payload : n,
+        ),
+      };
+
     case 'SET_FILTER_TYPE':
       return { ...state, filterType: action.payload };
 
@@ -94,11 +102,12 @@ interface NotesContextValue {
   filteredNotes:  Note[];
   selectNote:     (id: string | null) => void;
   createNote:     (type: NoteType) => Promise<void>;
-  updateNote:     (id: string, patch: Partial<Pick<Note, 'title' | 'body' | 'type' | 'patientRef'>>) => Promise<void>;
-  deleteNote:     (id: string) => Promise<void>;
-  pinNote:        (id: string, pinned: boolean) => Promise<void>;
-  setFilterType:  (type: NoteType | 'all') => void;
-  setSearchQuery: (q: string) => void;
+  updateNote:        (id: string, patch: Partial<Pick<Note, 'title' | 'body' | 'type' | 'patientRef'>>) => Promise<void>;
+  deleteNote:        (id: string) => Promise<void>;
+  pinNote:           (id: string, pinned: boolean) => Promise<void>;
+  updateLabStatus:   (id: string, status: LabStatus) => Promise<void>;
+  setFilterType:     (type: NoteType | 'all') => void;
+  setSearchQuery:    (q: string) => void;
 }
 
 const NotesContext = createContext<NotesContextValue | null>(null);
@@ -193,6 +202,13 @@ export function NotesProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'PIN_NOTE', payload: updated });
   }, [authState.user]);
 
+  const updateLabStatus = useCallback(async (id: string, status: LabStatus) => {
+    const user = authState.user;
+    if (!user) return;
+    const updated = await svc.updateLabStatus(id, status, user.id, user.role);
+    dispatch({ type: 'UPDATE_LAB_STATUS', payload: updated });
+  }, [authState.user]);
+
   const setFilterType = useCallback((type: NoteType | 'all') => {
     dispatch({ type: 'SET_FILTER_TYPE', payload: type });
   }, []);
@@ -204,7 +220,7 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   const value: NotesContextValue = {
     state, activeNote, filteredNotes,
     selectNote, createNote, updateNote, deleteNote, pinNote,
-    setFilterType, setSearchQuery,
+    updateLabStatus, setFilterType, setSearchQuery,
   };
 
   return (

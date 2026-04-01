@@ -1,25 +1,27 @@
 // NoteEditor — right panel (flex-1).
 // Title input + type selector + meta row + textarea with 1s debounce auto-save.
+// Lab notes show a LabStatusTracker below the top bar.
 // Debounce timer lives here (not in context) — flushes immediately on blur.
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Pin, PinOff, Trash2, Check, Loader2, AlertCircle } from 'lucide-react';
-import type { NoteType, SaveStatus } from '../../types/notes';
+import type { NoteType, SaveStatus, LabStatus } from '../../types/notes';
 import { NOTE_TYPE_META } from '../../types/notes';
 import { useNotes } from '../../contexts/NotesContext';
 import EmptyNoteState from './EmptyNoteState';
+import LabStatusTracker from './LabStatusTracker';
 
 const NOTE_TYPES: NoteType[] = ['clinical', 'finance', 'office', 'lab'];
 const DEBOUNCE_MS = 1000;
 
 export default function NoteEditor() {
-  const { activeNote, createNote, updateNote, deleteNote, pinNote } = useNotes();
+  const { activeNote, createNote, updateNote, deleteNote, pinNote, updateLabStatus } = useNotes();
 
   // Local draft state — keeps UI snappy, syncs to context on save
-  const [title,      setTitle]      = useState('');
-  const [body,       setBody]        = useState('');
-  const [noteType,   setNoteType]    = useState<NoteType>('office');
-  const [saveStatus, setSaveStatus]  = useState<SaveStatus>('idle');
+  const [title,      setTitle]     = useState('');
+  const [body,       setBody]      = useState('');
+  const [noteType,   setNoteType]  = useState<NoteType>('office');
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -28,7 +30,7 @@ export default function NoteEditor() {
   // Sync local state when active note changes
   useEffect(() => {
     if (!activeNote) return;
-    if (activeNote.id === activeIdRef.current) return; // already loaded
+    if (activeNote.id === activeIdRef.current) return;
 
     activeIdRef.current = activeNote.id;
     setTitle(activeNote.title);
@@ -46,7 +48,6 @@ export default function NoteEditor() {
     try {
       await updateNote(id, patch);
       setSaveStatus('saved');
-      // Revert to idle after 2s
       setTimeout(() => setSaveStatus(prev => prev === 'saved' ? 'idle' : prev), 2000);
     } catch {
       setSaveStatus('error');
@@ -87,7 +88,6 @@ export default function NoteEditor() {
     if (activeNote) scheduleSave(activeNote.id, { title, body, type: val });
   }
 
-  // Flush immediately on blur
   async function handleBlur() {
     if (!activeNote) return;
     if (debounceRef.current) {
@@ -95,6 +95,12 @@ export default function NoteEditor() {
       debounceRef.current = null;
     }
     await saveNow(activeNote.id, { title, body, type: noteType });
+  }
+
+  // ── Lab status ────────────────────────────────────────────────────────────
+  async function handleLabStatusChange(status: LabStatus) {
+    if (!activeNote) return;
+    await updateLabStatus(activeNote.id, status);
   }
 
   // ── Actions ───────────────────────────────────────────────────────────────
@@ -146,7 +152,6 @@ export default function NoteEditor() {
 
         {/* Save status + action buttons */}
         <div className="flex items-center gap-3">
-          {/* Save indicator */}
           <span className="text-xs text-slate-400 flex items-center gap-1.5 min-w-[60px] justify-end">
             {saveStatus === 'saving' && (
               <><Loader2 className="w-3 h-3 animate-spin text-[#0B3A70]" /> Saving…</>
@@ -182,6 +187,14 @@ export default function NoteEditor() {
           </button>
         </div>
       </div>
+
+      {/* ── Lab status tracker (only for lab notes) ──────────────────────── */}
+      {activeNote.type === 'lab' && activeNote.labStatus && (
+        <LabStatusTracker
+          current={activeNote.labStatus}
+          onChange={handleLabStatusChange}
+        />
+      )}
 
       {/* ── Editor body ─────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden px-6 py-4 gap-3">

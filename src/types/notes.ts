@@ -6,6 +6,17 @@ import type { UserRole } from './auth';
 export type NoteType   = 'clinical' | 'finance' | 'office' | 'lab';
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+// Lab case workflow status — only applies to notes where type === 'lab'
+export type LabStatus = 'preparing' | 'sent' | 'at_lab' | 'shipped' | 'received';
+
+export const LAB_STEPS: { key: LabStatus; label: string; sublabel: string }[] = [
+  { key: 'preparing', label: 'Preparing', sublabel: '보내기 전'  },
+  { key: 'sent',      label: 'Sent',      sublabel: '발송 완료'  },
+  { key: 'at_lab',    label: 'At Lab',    sublabel: 'Lab 작업 중' },
+  { key: 'shipped',   label: 'Shipped',   sublabel: '배송 중'    },
+  { key: 'received',  label: 'Received',  sublabel: '수령 완료'  },
+];
+
 export interface Note {
   id:          string;
   type:        NoteType;
@@ -18,6 +29,7 @@ export interface Note {
   updatedAt:   string;   // ISO
   isPinned:    boolean;
   patientRef:  { patientId: string; displayName: string } | null;
+  labStatus:   LabStatus | null;  // non-null only when type === 'lab'
 }
 
 export interface NotesState {
@@ -31,15 +43,16 @@ export interface NotesState {
 
 export type NotesAction =
   | { type: 'LOAD_START' }
-  | { type: 'LOAD_SUCCESS';     payload: Note[] }
-  | { type: 'SET_ACTIVE_NOTE';  payload: string | null }
-  | { type: 'CREATE_NOTE';      payload: Note }
-  | { type: 'UPDATE_NOTE';      payload: Note }
-  | { type: 'DELETE_NOTE';      payload: string }          // noteId
-  | { type: 'PIN_NOTE';         payload: Note }
-  | { type: 'SET_FILTER_TYPE';  payload: NoteType | 'all' }
-  | { type: 'SET_SEARCH_QUERY'; payload: string }
-  | { type: 'SET_ERROR';        payload: string }
+  | { type: 'LOAD_SUCCESS';      payload: Note[] }
+  | { type: 'SET_ACTIVE_NOTE';   payload: string | null }
+  | { type: 'CREATE_NOTE';       payload: Note }
+  | { type: 'UPDATE_NOTE';       payload: Note }
+  | { type: 'DELETE_NOTE';       payload: string }          // noteId
+  | { type: 'PIN_NOTE';          payload: Note }
+  | { type: 'UPDATE_LAB_STATUS'; payload: Note }
+  | { type: 'SET_FILTER_TYPE';   payload: NoteType | 'all' }
+  | { type: 'SET_SEARCH_QUERY';  payload: string }
+  | { type: 'SET_ERROR';         payload: string }
   | { type: 'RESET' };
 
 // Which roles can see each note type.

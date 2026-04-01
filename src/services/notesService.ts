@@ -2,7 +2,7 @@
 // TODO: connect to NestJS /notes endpoints — replace in-memory store.
 // ⚠️ HIPAA: audit log stores METADATA ONLY — never the note body.
 
-import type { Note, NoteType } from '../types/notes';
+import type { Note, NoteType, LabStatus } from '../types/notes';
 import type { UserRole } from '../types/auth';
 import { ROLE_CAN_VIEW } from '../types/notes';
 
@@ -38,6 +38,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  hoursAgo(2),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-c-2',
@@ -51,6 +52,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(1),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-c-3',
@@ -64,6 +66,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(2),
     isPinned:   true,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-c-4',
@@ -77,6 +80,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(3),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
 
   // ── Finance ───────────────────────────────────────────────────────────────
@@ -92,6 +96,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  hoursAgo(1),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-f-2',
@@ -105,6 +110,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(1),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-f-3',
@@ -118,6 +124,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(2),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-f-4',
@@ -131,6 +138,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(4),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
 
   // ── Office ────────────────────────────────────────────────────────────────
@@ -146,6 +154,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  hoursAgo(1),
     isPinned:   true,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-o-2',
@@ -159,6 +168,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(1),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-o-3',
@@ -172,6 +182,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(3),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
   {
     id:         'n-o-4',
@@ -185,14 +196,15 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(5),
     isPinned:   false,
     patientRef: null,
+    labStatus:  null,
   },
 
-  // ── Lab ───────────────────────────────────────────────────────────────────
+  // ── Lab — each note carries a labStatus showing case progress ─────────────
   {
     id:         'n-l-1',
     type:       'lab',
     title:      'Crown case — Ivoclar e.max — 2주 예상',
-    body:       'Lab: Ace Dental Lab | Sent: 3/31\nCase: PFM full crown → e.max all-ceramic (patient preference)\nShade: A2 (Vita Classic). Prep design: chamfer margin. Contacts: medium. Occlusion: reduce in centric 0.5mm.\nEstimated return: 2 weeks (April 14). Rush not requested.',
+    body:       'Lab: Ace Dental Lab | Sent: 4/1\nCase: PFM full crown → e.max all-ceramic (patient preference)\nShade: A2 (Vita Classic). Prep design: chamfer margin. Contacts: medium. Occlusion: reduce in centric 0.5mm.\nEstimated return: 2 weeks (April 14). Rush not requested.',
     authorId:   'u-2',
     authorName: 'Dr. James Kim',
     authorRole: 'dentist',
@@ -200,6 +212,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  hoursAgo(4),
     isPinned:   false,
     patientRef: null,
+    labStatus:  'sent',       // just sent to lab today
   },
   {
     id:         'n-l-2',
@@ -213,6 +226,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(1),
     isPinned:   false,
     patientRef: null,
+    labStatus:  'at_lab',     // lab received + working on it
   },
   {
     id:         'n-l-3',
@@ -226,6 +240,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(2),
     isPinned:   false,
     patientRef: null,
+    labStatus:  'preparing',  // impressions taken, not yet sent
   },
   {
     id:         'n-l-4',
@@ -239,6 +254,7 @@ const SEED_NOTES: Note[] = [
     updatedAt:  daysAgo(6),
     isPinned:   false,
     patientRef: null,
+    labStatus:  'shipped',    // lab shipped back, awaiting arrival
   },
 ];
 
@@ -302,6 +318,7 @@ export async function createNote(params: {
     createdAt:  now(),
     updatedAt:  now(),
     isPinned:   false,
+    labStatus:  params.type === 'lab' ? 'preparing' : null,
     patientRef: params.patientRef ?? null,
   };
   _notes = [note, ..._notes];
@@ -311,7 +328,7 @@ export async function createNote(params: {
 
 export async function updateNote(
   noteId:   string,
-  patch:    Partial<Pick<Note, 'title' | 'body' | 'type' | 'patientRef'>>,
+  patch:    Partial<Pick<Note, 'title' | 'body' | 'type' | 'patientRef' | 'labStatus'>>,
   userId:   string,
   userRole: UserRole,
 ): Promise<Note> {
@@ -345,6 +362,21 @@ export async function pinNote(
   );
   const updated = _notes.find(n => n.id === noteId)!;
   audit({ noteId, noteType: updated.type, userId, userRole, action: 'pin', timestamp: now() });
+  return { ...updated };
+}
+
+export async function updateLabStatus(
+  noteId:   string,
+  status:   LabStatus,
+  userId:   string,
+  userRole: UserRole,
+): Promise<Note> {
+  await delay(150);
+  _notes = _notes.map(n =>
+    n.id === noteId ? { ...n, labStatus: status, updatedAt: now() } : n,
+  );
+  const updated = _notes.find(n => n.id === noteId)!;
+  audit({ noteId, noteType: updated.type, userId, userRole, action: 'update', timestamp: now() });
   return { ...updated };
 }
 
