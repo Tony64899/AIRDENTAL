@@ -24,6 +24,9 @@ export const ROUTES = {
   // Messaging
   MESSAGES: '/messages',
 
+  // Notes
+  NOTES: '/notes',
+
   // Admin
   SETTINGS:        '/settings',
   STAFF:           '/staff',

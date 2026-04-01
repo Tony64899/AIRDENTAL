@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext, useAuthReducer, useAuth } from './hooks/useAuth';
 import { ClinicProvider } from './contexts/ClinicContext';
 import { MessagingProvider } from './contexts/MessagingContext';
+import { NotesProvider }     from './contexts/NotesContext';
 import { AppShell } from './components/layout/AppShell';
 
 import LoginPage         from './pages/LoginPage';
@@ -25,6 +26,7 @@ import StaffPage              from './pages/StaffPage';
 import OrgChartPage           from './pages/OrgChartPage';
 import AccountManagementPage  from './pages/AccountManagementPage';
 import MessagesPage           from './pages/MessagesPage';
+import NotesPage              from './pages/NotesPage';
 
 import { ROUTES } from './constants/routes';
 
@@ -170,6 +172,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path={ROUTES.NOTES}
+        element={
+          <ProtectedRoute>
+            <NotesPage />
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 catch-all */}
       <Route path="*" element={<NotFoundPage />} />
@@ -189,7 +199,9 @@ export default function App() {
         <BrowserRouter>
           {/* MessagingProvider initialises when authenticated, tears down on logout */}
           <MessagingProvider>
-            <AppRoutes />
+            <NotesProvider>
+              <AppRoutes />
+            </NotesProvider>
           </MessagingProvider>
         </BrowserRouter>
       </ClinicProvider>

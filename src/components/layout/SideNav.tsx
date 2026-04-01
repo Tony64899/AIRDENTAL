@@ -5,7 +5,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Calendar, LayoutDashboard, Users, CreditCard,
-  Image, Settings, Bell, UserCog, Building2, MessageCircle,
+  Image, Settings, Bell, UserCog, Building2, MessageCircle, FileText,
 } from 'lucide-react';
 
 import { AirDentalLogo } from '../../assets/icons/AirDentalLogo';
@@ -27,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Billing',    icon: CreditCard,       path: ROUTES.BILLING,       isBuilt: true  },
   { label: 'X-rays',     icon: Image,            path: ROUTES.XRAY,          isBuilt: true  },
   { label: 'Messages',   icon: MessageCircle,    path: ROUTES.MESSAGES,      isBuilt: true  },
+  { label: 'Notes',      icon: FileText,         path: ROUTES.NOTES,         isBuilt: true  },
   { label: 'Notify',     icon: Bell,             path: ROUTES.NOTIFICATIONS, isBuilt: true  },
   { label: 'Locations',  icon: Building2,        path: ROUTES.LOCATIONS,     isBuilt: true  },
   { label: 'Staff',      icon: UserCog,          path: ROUTES.STAFF,         isBuilt: true  },
