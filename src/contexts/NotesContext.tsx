@@ -205,7 +205,8 @@ export function NotesProvider({ children }: { children: ReactNode }) {
   const updateLabStatus = useCallback(async (id: string, status: LabStatus) => {
     const user = authState.user;
     if (!user) return;
-    const updated = await svc.updateLabStatus(id, status, user.id, user.role);
+    const userName = `${user.firstName} ${user.lastName}`;
+    const updated = await svc.updateLabStatus(id, status, user.id, userName, user.role);
     dispatch({ type: 'UPDATE_LAB_STATUS', payload: updated });
   }, [authState.user]);
 

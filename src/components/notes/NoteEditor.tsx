@@ -8,8 +8,9 @@ import { Pin, PinOff, Trash2, Check, Loader2, AlertCircle } from 'lucide-react';
 import type { NoteType, SaveStatus, LabStatus } from '../../types/notes';
 import { NOTE_TYPE_META } from '../../types/notes';
 import { useNotes } from '../../contexts/NotesContext';
-import EmptyNoteState from './EmptyNoteState';
-import LabStatusTracker from './LabStatusTracker';
+import EmptyNoteState    from './EmptyNoteState';
+import LabStatusTracker  from './LabStatusTracker';
+import NoteActivityLog   from './NoteActivityLog';
 
 const NOTE_TYPES: NoteType[] = ['clinical', 'finance', 'office', 'lab'];
 const DEBOUNCE_MS = 1000;
@@ -193,6 +194,8 @@ export default function NoteEditor() {
         <LabStatusTracker
           current={activeNote.labStatus}
           onChange={handleLabStatusChange}
+          updatedBy={activeNote.labStatusUpdatedBy}
+          updatedAt={activeNote.labStatusUpdatedAt}
         />
       )}
 
@@ -231,6 +234,13 @@ export default function NoteEditor() {
           placeholder="Start writing…"
           className="flex-1 w-full resize-none text-sm text-slate-700 leading-relaxed placeholder:text-slate-300 border-none outline-none bg-transparent"
         />
+
+        {/* Activity log — lab notes only, shown below the body */}
+        {activeNote.type === 'lab' && activeNote.activityLog.length > 0 && (
+          <div className="border-t border-slate-100 mt-2 -mx-6">
+            <NoteActivityLog entries={activeNote.activityLog} />
+          </div>
+        )}
       </div>
     </div>
   );
