@@ -1,27 +1,52 @@
 // LabStatusTracker — horizontal step progress bar for Lab notes.
 // Click any step to update the lab case status.
-// Shows who last updated the status and on which date (M/D/YYYY format).
+// Shows who last updated the status (M/D/YYYY - H:MM AM format).
+// Shows per-step timestamps below each step label.
 
 import { Check } from 'lucide-react';
 import type { LabStatus } from '../../types/notes';
 import { LAB_STEPS } from '../../types/notes';
 
 interface Props {
-  current:    LabStatus;
-  onChange:   (status: LabStatus) => void;
-  updatedBy?: string | null;   // display name of last person who changed status
-  updatedAt?: string | null;   // ISO timestamp of last status change
-  disabled?:  boolean;
+  current:          LabStatus;
+  onChange:         (status: LabStatus) => void;
+  updatedBy?:       string | null;   // display name of last person who changed status
+  updatedAt?:       string | null;   // ISO timestamp of last status change
+  stepTimestamps?:  Partial<Record<LabStatus, string>>;  // ISO timestamp per step
+  disabled?:        boolean;
+}
+
+/** Format ISO → M/D/YYYY - H:MM AM/PM */
+function fmtDateTime(iso: string): string {
+  const d    = new Date(iso);
+  const mo   = d.getMonth() + 1;
+  const day  = d.getDate();
+  const yr   = d.getFullYear();
+  const hr24 = d.getHours();
+  const min  = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hr24 >= 12 ? 'PM' : 'AM';
+  const hr12 = hr24 % 12 || 12;
+  return `${mo}/${day}/${yr} - ${hr12}:${min} ${ampm}`;
 }
 
 /** Format ISO → M/D/YYYY */
-function fmtDate(iso: string): string {
+function fmtStepDate(iso: string): string {
   const d = new Date(iso);
   return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
 }
 
+/** Format ISO → H:MM AM/PM */
+function fmtStepTime(iso: string): string {
+  const d    = new Date(iso);
+  const hr24 = d.getHours();
+  const min  = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hr24 >= 12 ? 'PM' : 'AM';
+  const hr12 = hr24 % 12 || 12;
+  return `${hr12}:${min} ${ampm}`;
+}
+
 export default function LabStatusTracker({
-  current, onChange, updatedBy, updatedAt, disabled = false,
+  current, onChange, updatedBy, updatedAt, stepTimestamps = {}, disabled = false,
 }: Props) {
   const currentIdx = LAB_STEPS.findIndex(s => s.key === current);
 
@@ -37,7 +62,7 @@ export default function LabStatusTracker({
           <p className="text-[11px] text-slate-400 tabular-nums">
             Last updated by&nbsp;
             <span className="font-semibold text-slate-600">{updatedBy}</span>
-            &nbsp;·&nbsp;{fmtDate(updatedAt)}
+            &nbsp;·&nbsp;{fmtDateTime(updatedAt)}
           </p>
         )}
       </div>
@@ -47,12 +72,13 @@ export default function LabStatusTracker({
         {LAB_STEPS.map((step, idx) => {
           const isCompleted = idx < currentIdx;
           const isCurrent   = idx === currentIdx;
+          const ts          = stepTimestamps[step.key];
 
           return (
             <div key={step.key} className="flex items-start flex-1 last:flex-none">
 
-              {/* Step circle + label */}
-              <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
+              {/* Step circle + label + per-step timestamp */}
+              <div className="flex flex-col items-center gap-1 flex-shrink-0">
                 <button
                   type="button"
                   disabled={disabled}
@@ -80,6 +106,21 @@ export default function LabStatusTracker({
                 ].join(' ')}>
                   {step.label}
                 </p>
+
+                {/* Per-step timestamp — shown only when the step has been reached */}
+                {ts ? (
+                  <div className="flex flex-col items-center leading-tight">
+                    <span className="text-[9px] text-slate-400 tabular-nums whitespace-nowrap">
+                      {fmtStepDate(ts)}
+                    </span>
+                    <span className="text-[9px] text-slate-400 tabular-nums whitespace-nowrap">
+                      {fmtStepTime(ts)}
+                    </span>
+                  </div>
+                ) : (
+                  /* Reserve height so circles stay vertically aligned when some steps lack timestamps */
+                  <div className="h-[22px]" />
+                )}
               </div>
 
               {/* Connector line */}

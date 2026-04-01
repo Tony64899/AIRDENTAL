@@ -1,17 +1,19 @@
-// NoteActivityLog — shows the full audit trail at the bottom of a Lab note.
+// NoteActivityLog — scrollable audit trail in the right panel of a Lab note.
 // Who created it, who sent it, who updated each status — with date + time.
 // ⚠️ HIPAA: renders activity metadata only — no note body content.
+// NOTE: The panel header (ClipboardList + "Activity Log") is rendered by NoteEditor,
+//       so this component renders entries only.
 
-import { ClipboardList, Plus, ArrowRight } from 'lucide-react';
+import { Plus, ArrowRight, ClipboardList } from 'lucide-react';
 import type { NoteActivityEntry } from '../../types/notes';
 
 interface Props {
   entries: NoteActivityEntry[];
 }
 
-/** Format ISO → M/D/YYYY h:MM AM/PM  (e.g. 4/1/2026 9:05 AM) */
+/** Format ISO → M/D/YYYY - H:MM AM/PM  (e.g. 4/1/2026 - 9:05 AM) */
 function fmtDateTime(iso: string): string {
-  const d = new Date(iso);
+  const d    = new Date(iso);
   const mo   = d.getMonth() + 1;
   const day  = d.getDate();
   const yr   = d.getFullYear();
@@ -19,7 +21,7 @@ function fmtDateTime(iso: string): string {
   const min  = String(d.getMinutes()).padStart(2, '0');
   const ampm = hr24 >= 12 ? 'PM' : 'AM';
   const hr12 = hr24 % 12 || 12;
-  return `${mo}/${day}/${yr}  ${hr12}:${min} ${ampm}`;
+  return `${mo}/${day}/${yr} - ${hr12}:${min} ${ampm}`;
 }
 
 /** Icon + colour per action type */
@@ -33,15 +35,7 @@ export default function NoteActivityLog({ entries }: Props) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="px-6 pb-6 pt-2">
-      {/* Section header */}
-      <div className="flex items-center gap-2 mb-3">
-        <ClipboardList className="w-3.5 h-3.5 text-slate-400" />
-        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-          Activity Log
-        </span>
-      </div>
-
+    <div className="px-4 pb-4 pt-3">
       {/* Timeline */}
       <div className="relative">
         {/* Vertical line */}
